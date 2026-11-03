@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indio Supply | Mayorista & Minorista</title>
+    <!-- Configuración para instalar como App -->
+    <meta name="theme-color" content="#1e293b">
+    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,{
+        %22name%22: %22Indio Supply%22,
+        %22short_name%22: %22IndioSupply%22,
+        %22start_url%22: %22./index.html%22,
+        %22display%22: %22standalone%22,
+        %22background_color%22: %22%230f172a%22,
+        %22theme_color%22: %22%231e293b%22,
+        %22icons%22: [{
+            %22src%22: %22https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=192&h=192&fit=crop%22,
+            %22sizes%22: %22192x192%22,
+            %22type%22: %22image/jpeg%22
+        }]
+    }">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 text-white p-2 rounded-xl font-bold text-xl shadow">
+                    <i class="fa-solid fa-box-open"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-wide text-white">INDIO SUPPLY</h1>
+                    <p class="text-xs text-slate-400">San Juan, Argentina 🇦🇷</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <button onclick="toggleModoPrecios()" id="btnModoPrecios" class="bg-slate-700 hover:bg-slate-600 text-xs font-semibold px-3 py-2 rounded-lg transition border border-slate-600 shadow">
+                    Modo: <span id="txtModo">Minorista</span>
+                </button>
+                <button onclick="abrirAdmin()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow">
+                    <i class="fa-solid fa-gear"></i> Admin
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-6xl mx-auto px-4 py-6 w-full">
+        <!-- Buscador y Filtros -->
+        <div class="flex flex-col md:flex-row gap-4 mb-8 justify-between items-center">
+            <div class="relative w-full md:w-96">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-slate-400"></i>
+                <input type="text" id="buscador" oninput="filtrarProductos()" placeholder="Buscar productos..." class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 shadow-inner">
+            </div>
+            <div id="categoriasFiltro" class="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
+                <button onclick="filtrarCategoria('todos')" class="cat-btn bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition shadow">Todos</button>
+            </div>
+        </div>
+
+        <!-- Grid de Productos -->
+        <div id="gridProductos" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- Se llena por JS -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 border-t border-slate-700 py-6 text-center text-xs text-slate-400 mt-auto">
+        <p>© 2026 Indio Supply - San Juan, Argentina. Pagos vía alias: <span class="text-blue-400 font-bold">indio.sj</span></p>
+    </footer>
+
+    <!-- Modal Admin -->
+    <div id="modalAdmin" class="fixed inset-0 bg-black/70 hidden justify-center items-center z-50 p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
+                <h3 class="font-bold text-lg text-white"><i class="fa-solid fa-screwdriver-wrench text-blue-500"></i> Panel de Administración</h3>
+                <button onclick="cerrarAdmin()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <div id="panelLogin">
+                <p class="text-sm text-slate-300 mb-3">Ingresá la contraseña de administrador:</p>
+                <input type="password" id="passAdmin" placeholder="Contraseña..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 mb-3 text-sm focus:outline-none focus:border-blue-500">
+                <button onclick="verificarPass()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-xl text-sm transition shadow">Ingresar</button>
+            </div>
+
+            <div id="panelContenido" class="hidden">
+                <!-- Botones de Respaldo -->
+                <div class="flex flex-wrap gap-2 mb-6 bg-slate-900 p-3 rounded-xl border border-slate-700 justify-between items-center">
+                    <span class="text-xs text-slate-400 font-semibold">Respaldo de datos:</span>
+                    <div class="flex gap-2">
+                        <button onclick="exportarDatos()" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-600 text-xs px-3 py-1.5 rounded-lg font-semibold transition"><i class="fa-solid fa-download"></i> Exportar JSON</button>
+                        <label class="bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-600 text-xs px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer">
+                            <i class="fa-solid fa-upload"></i> Importar JSON <input type="file" id="fileInput" accept=".json" onchange="importarDatos(event)" class="hidden">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="font-bold text-sm text-blue-400" id="tituloForm">Agregar / Editar Producto</h4>
+                    <button onclick="limpiarForm()" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg transition font-semibold">Nuevo Producto</button>
+                </div>
+                
+                <input type="hidden" id="prodId">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                    <input type="text" id="prodNombre" placeholder="Nombre del producto" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+                    <input type="text" id="prodCat" placeholder="Categoría (ej: Perfumes, Accesorios)" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+                    <input type="number" id="prodMin" placeholder="Precio Minorista ($)" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+                    <input type="number" id="prodMay" placeholder="Precio Mayorista ($)" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+                </div>
+                <input type="text" id="prodImg" placeholder="URL de la imagen (opcional)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm mb-4 focus:outline-none focus:border-blue-500">
+                <button onclick="guardarProducto()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-sm transition mb-6 shadow">Guardar Producto</button>
+
+                <h4 class="font-bold text-sm text-slate-300 mb-3">Listado de Productos Actuales</h4>
+                <div id="listaAdminProductos" class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                    <!-- Dinámico -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let modoMayorista = false;
+        let categoriaActual = 'todos';
+        const telefonoWhatsApp = "5492646255995"; // Número oficial configurado
+
+        let productos = JSON.parse(localStorage.getItem('indio_productos')) || [
+            { id: 1, nombre: "Perfume Árabe Khamrah 100ml", categoria: "Perfumes", minorista: 45000, mayorista: 38000, img: "https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=500&auto=format&fit=crop&q=60" },
+            { id: 2, nombre: "Decant Armaf Odyssey 30ml", categoria: "Perfumes", minorista: 18000, mayorista: 14000, img: "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=500&auto=format&fit=crop&q=60" },
+            { id: 3, nombre: "Diamantes Free Fire (Pack x1000)", categoria: "Digital", minorista: 9500, mayorista: 8000, img: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500&auto=format&fit=crop&q=60" }
+        ];
+
+        function renderizar() {
+            const grid = document.getElementById('gridProductos');
+            grid.innerHTML = '';
+            
+            let filtrados = productos.filter(p => {
+                let matchCat = categoriaActual === 'todos' || p.categoria.toLowerCase() === categoriaActual.toLowerCase();
+                let busq = document.getElementById('buscador').value.toLowerCase();
+                let matchBusq = p.nombre.toLowerCase().includes(busq) || p.categoria.toLowerCase().includes(busq);
+                return matchCat && matchBusq;
+            });
+
+            if(filtrados.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500">No se encontraron productos.</div>`;
+                return;
+            }
+
+            filtrados.forEach(p => {
+                let precio = modoMayorista ? p.mayorista : p.minorista;
+                let etiquetaTipo = modoMayorista ? '<span class="bg-purple-900/80 text-purple-300 text-[10px] px-2.5 py-1 rounded-md font-bold uppercase tracking-wider">MAYORISTA</span>' : '<span class="bg-blue-900/80 text-blue-300 text-[10px] px-2.5 py-1 rounded-md font-bold uppercase tracking-wider">MINORISTA</span>';
+                let imagenSrc = p.img && p.img.trim() !== "" ? p.img : "https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=500&auto=format&fit=crop&q=60";
+
+                grid.innerHTML += `
+                    <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden flex flex-col justify-between shadow-lg hover:border-slate-600 transition">
+                        <div>
+                            <div class="h-40 bg-slate-900 overflow-hidden relative">
+                                <img src="${imagenSrc}" alt="${p.nombre}" class="w-full h-full object-cover">
+                                <div class="absolute top-2 right-2">${etiquetaTipo}</div>
+                            </div>
+                            <div class="p-4">
+                                <span class="text-[11px] uppercase tracking-wider text-blue-400 font-semibold">${p.categoria}</span>
+                                <h3 class="font-bold text-sm text-white mt-1 line-clamp-2">${p.nombre}</h3>
+                                <div class="mt-3 text-lg font-extrabold text-emerald-400">$${Number(precio).toLocaleString('es-AR')}</div>
+                            </div>
+                        </div>
+                        <div class="p-4 pt-0">
+                            <button onclick="comprarWhatsApp('${p.nombre.replace(/'/g, "\\'")}', ${precio})" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow">
+                                <i class="fa-brands fa-whatsapp text-sm"></i> Pedir por WhatsApp
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderizarCategorias() {
+            const contenedor = document.getElementById('categoriasFiltro');
+            let cats = ['todos', ...new Set(productos.map(p => p.categoria))];
+            contenedor.innerHTML = '';
+            cats.forEach(c => {
+                let activo = categoriaActual.toLowerCase() === c.toLowerCase();
+                let clase = activo ? 'bg-blue-600 text-white shadow' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700';
+                contenedor.innerHTML += `<button onclick="filtrarCategoria('${c}')" class="cat-btn ${clase} px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition capitalize">${c}</button>`;
+            });
+        }
+
+        function filtrarCategoria(cat) {
+            categoriaActual = cat;
+            renderizarCategorias();
+            renderizar();
+        }
+
+        function filtrarProductos() {
+            renderizar();
+        }
+
+        function toggleModoPrecios() {
+            modoMayorista = !modoMayorista;
+            document.getElementById('txtModo').innerText = modoMayorista ? "Mayorista" : "Minorista";
+            let btn = document.getElementById('btnModoPrecios');
+            if(modoMayorista) {
+                btn.classList.remove('bg-slate-700', 'border-slate-600');
+                btn.classList.add('bg-purple-600', 'border-purple-500', 'text-white');
+            } else {
+                btn.classList.remove('bg-purple-600', 'border-purple-500', 'text-white');
+                btn.classList.add('bg-slate-700', 'border-slate-600');
+            }
+            renderizar();
+        }
+
+        function comprarWhatsApp(nombre, precio) {
+            let tipo = modoMayorista ? "Mayorista" : "Minorista";
+            let texto = `Hola Indio! 👋 Vengo de tu web Indio Supply y quiero hacer un pedido:\n\n*Producto:* ${nombre}\n*Modalidad:* ${tipo}\n*Precio:* $${Number(precio).toLocaleString('es-AR')}\n\n¿Cómo coordinamos el pago por alias (indio.sj) y el envío?`;
+            window.open(`https://wa.me/${telefonoWhatsApp}?text=${encodeURIComponent(texto)}`, '_blank');
+        }
+
+        function abrirAdmin() {
+            document.getElementById('modalAdmin').classList.remove('hidden');
+            document.getElementById('modalAdmin').classList.add('flex');
+        }
+
+        function cerrarAdmin() {
+            document.getElementById('modalAdmin').classList.remove('flex');
+            document.getElementById('modalAdmin').classList.add('hidden');
+        }
+
+        function verificarPass() {
+            let p = document.getElementById('passAdmin').value;
+            if(p === "indiosupply") {
+                document.getElementById('panelLogin').classList.add('hidden');
+                document.getElementById('panelContenido').classList.remove('hidden');
+                renderizarAdminLista();
+            } else {
+                alert("Contraseña incorrecta");
+            }
+        }
+
+        function renderizarAdminLista() {
+            const lista = document.getElementById('listaAdminProductos');
+            lista.innerHTML = '';
+            productos.forEach(p => {
+                lista.innerHTML += `
+                    <div class="bg-slate-900 border border-slate-700 p-3 rounded-xl flex justify-between items-center text-xs">
+                        <div>
+                            <span class="font-bold text-white">${p.nombre}</span>
+                            <div class="text-slate-400">Min: $${p.minorista.toLocaleString('es-AR')} | May: $${p.mayorista.toLocaleString('es-AR')}</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="editarProd(${p.id})" class="bg-blue-600/30 hover:bg-blue-600/50 text-blue-400 px-2.5 py-1 rounded-lg transition"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="eliminarProd(${p.id})" class="bg-red-600/30 hover:bg-red-600/50 text-red-400 px-2.5 py-1 rounded-lg transition"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function limpiarForm() {
+            document.getElementById('prodId').value = '';
+            document.getElementById('prodNombre').value = '';
+            document.getElementById('prodCat').value = '';
+            document.getElementById('prodMin').value = '';
+            document.getElementById('prodMay').value = '';
+            document.getElementById('prodImg').value = '';
+        }
+
+        function guardarProducto() {
+            let id = document.getElementById('prodId').value;
+            let nombre = document.getElementById('prodNombre').value;
+            let categoria = document.getElementById('prodCat').value;
+            let minorista = Number(document.getElementById('prodMin').value);
+            let mayorista = Number(document.getElementById('prodMay').value);
+            let img = document.getElementById('prodImg').value;
+
+            if(!nombre || !categoria || !minorista) {
+                alert("Completá al menos el nombre, categoría y precio minorista.");
+                return;
+            }
+
+            if(id) {
+                let p = productos.find(x => x.id == id);
+                p.nombre = nombre;
+                p.categoria = categoria;
+                p.minorista = minorista;
+                p.mayorista = mayorista;
+                p.img = img;
+            } else {
+                let nuevoId = productos.length > 0 ? Math.max(...productos.map(x => x.id)) + 1 : 1;
+                productos.push({ id: nuevoId, nombre, categoria, minorista, mayorista, img });
+            }
+
+            localStorage.setItem('indio_productos', JSON.stringify(productos));
+            limpiarForm();
+            renderizarCategorias();
+            renderizar();
+            renderizarAdminLista();
+            alert("¡Guardado con éxito!");
+        }
+
+        function editarProd(id) {
+            let p = productos.find(x => x.id == id);
+            document.getElementById('prodId').value = p.id;
+            document.getElementById('prodNombre').value = p.nombre;
+            document.getElementById('prodCat').value = p.categoria;
+            document.getElementById('prodMin').value = p.minorista;
+            document.getElementById('prodMay').value = p.mayorista;
+            document.getElementById('prodImg').value = p.img || '';
+        }
+
+        function eliminarProd(id) {
+            if(confirm("¿Seguro querés eliminar este producto?")) {
+                productos = productos.filter(x => x.id != id);
+                localStorage.setItem('indio_productos', JSON.stringify(productos));
+                renderizarCategorias();
+                renderizar();
+                renderizarAdminLista();
+            }
+        }
+
+        function exportarDatos() {
+            let datosStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(productos));
+            let downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", datosStr);
+            downloadAnchor.setAttribute("download", "indio_supply_backup.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importarDatos(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let json = JSON.parse(e.target.result);
+                    if(Array.isArray(json)) {
+                        productos = json;
+                        localStorage.setItem('indio_productos', JSON.stringify(productos));
+                        renderizarCategorias();
+                        renderizar();
+                        renderizarAdminLista();
+                        alert("¡Datos importados con éxito!");
+                    } else {
+                        alert("El archivo no tiene el formato correcto.");
+                    }
+                } catch(err) {
+                    alert("Error al leer el archivo JSON.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Inicializar
+        renderizarCategorias();
+        renderizar();
+    </script>
+</body>
+</html>
